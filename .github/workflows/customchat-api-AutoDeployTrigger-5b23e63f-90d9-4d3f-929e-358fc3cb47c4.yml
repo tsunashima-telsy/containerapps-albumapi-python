@@ -1,0 +1,42 @@
+name: Trigger auto deployment for customchat-api
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - 'src/**'
+    - '.github/workflows/customchat-api-AutoDeployTrigger-5b23e63f-90d9-4d3f-929e-358fc3cb47c4.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:
+      
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.CUSTOMCHATAPI_AZURE_CREDENTIALS }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          appSourcePath: ${{ github.workspace }}/src 
+          registryUrl: ca43336741e0acr.azurecr.io
+          registryUsername: ${{ secrets.CUSTOMCHATAPI_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.CUSTOMCHATAPI_REGISTRY_PASSWORD }}
+          containerAppName: customchat-api
+          resourceGroup: CustomChatGroup
+          imageToBuild: ca43336741e0acr.azurecr.io/customchat-api:${{ github.sha }}
+          dockerfilePath: Dockerfile
+
+     
+
